@@ -7,3 +7,6 @@
 [submodule "src/cartographer/cartographer"]
 	path = src/cartographer/cartographer
 	url = https://github.com/cartographer-project/cartographer.git
+[submodule "src/stage_ros2"]
+	path = src/stage_ros2
+	url = https://github.com/damuxt/stage_ros2.git
