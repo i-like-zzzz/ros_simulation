@@ -1,0 +1,12 @@
+# 编译和安装目录
+build/
+install/
+log/
+
+# IDE 配置文件
+.vscode/
+.idea/
+
+# 其他临时文件
+*.log
+*.swp
