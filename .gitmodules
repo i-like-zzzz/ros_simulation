@@ -1,3 +1,6 @@
 [submodule "src/Stage"]
 	path = src/Stage
 	url = https://github.com/damuxt/Stage.git
+[submodule "src/cartographer/cartographer_ros"]
+	path = src/cartographer/cartographer_ros
+	url = https://github.com/ros2/cartographer_ros.git
