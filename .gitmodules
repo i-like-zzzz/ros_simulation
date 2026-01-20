@@ -1,12 +1,15 @@
 [submodule "src/Stage"]
 	path = src/Stage
-	url = https://github.com/damuxt/Stage.git
+	url = https://github.com/i-like-zzzz/Stage.git
 [submodule "src/cartographer/cartographer_ros"]
 	path = src/cartographer/cartographer_ros
-	url = https://github.com/ros2/cartographer_ros.git
+	url = https://github.com/i-like-zzzz/cartographer_ros.git
 [submodule "src/cartographer/cartographer"]
 	path = src/cartographer/cartographer
-	url = https://github.com/cartographer-project/cartographer.git
+	url = https://github.com/i-like-zzzz/cartographer.git
 [submodule "src/stage_ros2"]
 	path = src/stage_ros2
-	url = https://github.com/damuxt/stage_ros2.git
+	url = https://github.com/i-like-zzzz/stage_ros2.git
+[submodule "src/navigation2"]
+	path = src/navigation2
+	url = https://github.com/i-like-zzzz/navigation2.git
