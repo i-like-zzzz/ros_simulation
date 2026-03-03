@@ -13,6 +13,10 @@
 - `start_rviz:=true|false`
 - `start_navigation:=true|false`
 - `gazebo_world:=<absolute_world_path>`
+- `play_bag:=true|false`
+- `bag_file:=/home/zwc/ros_simulation/bag/1111/zwc_0.db3`（默认）
+- `bag_rate:=1.0`
+- `bag_loop:=true|false`
 
 ## 一键启动命令（可直接复制）
 
@@ -30,6 +34,11 @@ cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source insta
 ### 3) Gazebo + 无SLAM（仅看世界和机器人）
 ```bash
 cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source install/setup.bash && ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=none start_navigation:=false start_rviz:=true
+```
+
+### 4) 播放根目录 bag（默认路径）
+```bash
+cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source install/setup.bash && ros2 launch bringup main.launch.py play_bag:=true bag_file:=/home/zwc/ros_simulation/bag/1111/zwc_0.db3
 ```
 
 ## 可选世界
