@@ -22,23 +22,27 @@
 
 ### 1) Gazebo + Cartographer + RViz（推荐）
 ```bash
-cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source install/setup.bash && ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=cartographer start_navigation:=false start_rviz:=true
+ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=cartographer start_navigation:=false start_rviz:=true
 ```
 
 ### 2) Gazebo + SLAM Toolbox + RViz
 ```bash
-cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source install/setup.bash && ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=slam_toolbox start_navigation:=false start_rviz:=true
+ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=slam_toolbox start_navigation:=false start_rviz:=true
 ```
 说明：需要系统已安装 `slam_toolbox`。若未安装，启动会打印 `slam_toolbox is not installed, skip slam_toolbox launch.`。
 
 ### 3) Gazebo + 无SLAM（仅看世界和机器人）
 ```bash
-cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source install/setup.bash && ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=none start_navigation:=false start_rviz:=true
+ros2 launch bringup main.launch.py simulator:=gazebo gazebo_gui:=true gazebo_world:=/home/zwc/ros_simulation/install/gazebo_lidar_nav_demo/share/gazebo_lidar_nav_demo/worlds/lidar_lab.world slam_system:=none start_navigation:=false start_rviz:=true
 ```
 
-### 4) 播放根目录 bag（默认路径）
+### 4) 播放 bag 并启动 Cartographer 建图（推荐）
 ```bash
-cd /home/zwc/ros_simulation && source /opt/ros/humble/setup.bash && source install/setup.bash && ros2 launch bringup main.launch.py play_bag:=true bag_file:=/home/zwc/ros_simulation/bag/1111/zwc_0.db3
+ros2 launch bringup main.launch.py \
+  play_bag:=true \
+  bag_file:=/home/zwc/ros_simulation/bag/1111 \
+  slam_system:=cartographer \
+  start_rviz:=true
 ```
 
 ## 可选世界

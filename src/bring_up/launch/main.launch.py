@@ -219,7 +219,7 @@ def generate_launch_description():
             description='Start rosbag playback'),
         DeclareLaunchArgument(
             'bag_file',
-            default_value='/home/zwc/ros_simulation/bag/1111/zwc_0.db3',
+            default_value='/home/zwc/ros_simulation/bag/1111',
             description='Path to rosbag directory or db3 file'),
         DeclareLaunchArgument(
             'bag_rate',

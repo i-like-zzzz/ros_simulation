@@ -2,6 +2,7 @@
 build/
 install/
 log/
+test/
 
 # IDE 配置文件
 .vscode/
@@ -10,3 +11,10 @@ log/
 # 其他临时文件
 *.log
 *.swp
+__pycache__/
+*.pyc
+
+# 本地数据目录
+bag/
+src/driver/
+src/driver\ /
