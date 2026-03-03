@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo, TimerAction
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
@@ -15,26 +15,44 @@ def generate_launch_description():
     bag_file = LaunchConfiguration('bag_file')
     bag_rate = LaunchConfiguration('bag_rate')
     bag_loop = LaunchConfiguration('bag_loop')
+    simulator = LaunchConfiguration('simulator')
     start_navigation = LaunchConfiguration('start_navigation')
     start_rviz = LaunchConfiguration('start_rviz')
     start_stage = LaunchConfiguration('start_stage')
     stage_enable_gui = LaunchConfiguration('stage_enable_gui')
-    world = LaunchConfiguration('world')
+    stage_world = LaunchConfiguration('stage_world')
+    gazebo_world = LaunchConfiguration('gazebo_world')
+    gazebo_gui = LaunchConfiguration('gazebo_gui')
     slam_system = LaunchConfiguration('slam_system')
     cartographer_config_dir = LaunchConfiguration('cartographer_config_dir')
     nav2_autostart = LaunchConfiguration('nav2_autostart')
 
     bringup_launch_dir = PathJoinSubstitution([FindPackageShare('bringup'), 'launch'])
+
     slam_toolbox_available = True
     nav2_bringup_available = True
+    gazebo_ros_available = True
+    gazebo_demo_available = True
+
     try:
         get_package_share_directory('slam_toolbox')
     except PackageNotFoundError:
         slam_toolbox_available = False
+
     try:
         get_package_share_directory('nav2_bringup')
     except PackageNotFoundError:
         nav2_bringup_available = False
+
+    try:
+        get_package_share_directory('gazebo_ros')
+    except PackageNotFoundError:
+        gazebo_ros_available = False
+
+    try:
+        get_package_share_directory('gazebo_lidar_nav_demo')
+    except PackageNotFoundError:
+        gazebo_demo_available = False
 
     stage_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -42,15 +60,37 @@ def generate_launch_description():
         ),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'world': world,
+            'world': stage_world,
             'stage_enable_gui': stage_enable_gui
         }.items(),
         condition=IfCondition(
             PythonExpression([
-                "'", start_stage, "' == 'true' and '", play_bag, "' != 'true'"
+                "'", simulator, "' == 'stage' and '", start_stage, "' == 'true' and '", play_bag, "' != 'true'"
             ])
         )
     )
+
+    if gazebo_ros_available and gazebo_demo_available:
+        gazebo_include = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                PathJoinSubstitution([bringup_launch_dir, 'gazebo_sim.launch.py'])
+            ),
+            launch_arguments={
+                'use_sim_time': use_sim_time,
+                'world': gazebo_world,
+                'gazebo_gui': gazebo_gui
+            }.items(),
+            condition=IfCondition(
+                PythonExpression([
+                    "'", simulator, "' == 'gazebo' and '", play_bag, "' != 'true'"
+                ])
+            )
+        )
+    else:
+        gazebo_include = LogInfo(
+            msg='[main.launch] gazebo_ros or gazebo_lidar_nav_demo not installed, skip Gazebo launch.',
+            condition=LaunchConfigurationEquals('simulator', 'gazebo')
+        )
 
     bag_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -75,9 +115,37 @@ def generate_launch_description():
         }.items(),
         condition=IfCondition(
             PythonExpression([
-                "'", slam_system, "' == 'cartographer' and '", play_bag, "' != 'true'"
+                "'", slam_system,
+                "' == 'cartographer' and '", play_bag,
+                "' != 'true' and '", simulator,
+                "' == 'stage'"
             ])
         )
+    )
+
+    cartographer_gazebo_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([bringup_launch_dir, 'slam_cartographer.launch.py'])
+        ),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            'cartographer_config_dir': cartographer_config_dir,
+            'cartographer_config_basename': 'gazebo_2d3d.lua'
+        }.items(),
+        condition=IfCondition(
+            PythonExpression([
+                "'", slam_system,
+                "' == 'cartographer' and '", play_bag,
+                "' != 'true' and '", simulator,
+                "' == 'gazebo'"
+            ])
+        )
+    )
+
+    # In Gazebo mode, give gzserver/factory enough time to expose /spawn_entity first.
+    cartographer_gazebo_delayed_include = TimerAction(
+        period=15.0,
+        actions=[cartographer_gazebo_include]
     )
 
     cartographer_bag_include = IncludeLaunchDescription(
@@ -162,6 +230,10 @@ def generate_launch_description():
             default_value='false',
             description='Whether rosbag loops playback'),
         DeclareLaunchArgument(
+            'simulator',
+            default_value='stage',
+            description='Simulator backend: stage | gazebo | none'),
+        DeclareLaunchArgument(
             'slam_system',
             default_value='none',
             description='SLAM system: cartographer | slam_toolbox | none'),
@@ -176,15 +248,27 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'start_stage',
             default_value='true',
-            description='Start stage simulator (disabled automatically when play_bag=true)'),
+            description='Legacy switch for stage. Keep true in stage mode.'),
         DeclareLaunchArgument(
             'stage_enable_gui',
             default_value='true',
             description='Enable Stage GUI window'),
         DeclareLaunchArgument(
-            'world',
+            'stage_world',
             default_value='my_house',
-            description='Stage world name without .world'),
+            description='Stage world file name without .world'),
+        DeclareLaunchArgument(
+            'gazebo_gui',
+            default_value='true',
+            description='Enable Gazebo GUI window'),
+        DeclareLaunchArgument(
+            'gazebo_world',
+            default_value=PathJoinSubstitution([
+                FindPackageShare('gazebo_lidar_nav_demo'),
+                'worlds',
+                'lidar_lab.world'
+            ]),
+            description='Gazebo world absolute path'),
         DeclareLaunchArgument(
             'cartographer_config_dir',
             default_value=PathJoinSubstitution([
@@ -205,12 +289,14 @@ def generate_launch_description():
                 'common.rviz'
             ]),
             description='RViz config file path'),
-        LogInfo(msg=['[main.launch] slam_system = ', slam_system]),
+        LogInfo(msg=['[main.launch] simulator = ', simulator, ', slam_system = ', slam_system]),
         LogInfo(msg=['[main.launch] play_bag = ', play_bag, ', start_navigation = ', start_navigation]),
         LogInfo(msg=['[main.launch] start_rviz = ', start_rviz]),
         stage_include,
+        gazebo_include,
         bag_include,
         cartographer_stage_include,
+        cartographer_gazebo_delayed_include,
         cartographer_bag_include,
         slam_toolbox_include,
         navigation_include,
