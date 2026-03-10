@@ -26,6 +26,8 @@ def generate_launch_description():
     slam_system = LaunchConfiguration('slam_system')
     cartographer_config_dir = LaunchConfiguration('cartographer_config_dir')
     nav2_autostart = LaunchConfiguration('nav2_autostart')
+    simple_slam_config_file = LaunchConfiguration('simple_slam_config_file')
+    simple_slam_mode = LaunchConfiguration('simple_slam_mode')
 
     bringup_launch_dir = PathJoinSubstitution([FindPackageShare('bringup'), 'launch'])
 
@@ -180,6 +182,18 @@ def generate_launch_description():
             condition=LaunchConfigurationEquals('slam_system', 'slam_toolbox')
         )
 
+    simple_slam_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([bringup_launch_dir, 'slam_simple_slam.launch.py'])
+        ),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            'system_mode': simple_slam_mode,
+            'simple_slam_config_file': simple_slam_config_file
+        }.items(),
+        condition=LaunchConfigurationEquals('slam_system', 'simple_slam')
+    )
+
     if nav2_bringup_available:
         navigation_include = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -236,7 +250,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'slam_system',
             default_value='none',
-            description='SLAM system: cartographer | slam_toolbox | none'),
+            description='SLAM system: cartographer | slam_toolbox | simple_slam | none'),
         DeclareLaunchArgument(
             'start_navigation',
             default_value='false',
@@ -278,6 +292,18 @@ def generate_launch_description():
             ]),
             description='Cartographer config directory'),
         DeclareLaunchArgument(
+            'simple_slam_config_file',
+            default_value=PathJoinSubstitution([
+                FindPackageShare('simple_slam'),
+                'config',
+                'simple_slam_2d.yaml'
+            ]),
+            description='simple_slam parameter file'),
+        DeclareLaunchArgument(
+            'simple_slam_mode',
+            default_value='mapping',
+            description='simple_slam mode: mapping | localization'),
+        DeclareLaunchArgument(
             'nav2_autostart',
             default_value='true',
             description='Autostart Nav2 lifecycle nodes'),
@@ -299,6 +325,7 @@ def generate_launch_description():
         cartographer_gazebo_delayed_include,
         cartographer_bag_include,
         slam_toolbox_include,
+        simple_slam_include,
         navigation_include,
         rviz_include,
     ])
