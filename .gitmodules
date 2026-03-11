@@ -13,3 +13,6 @@
 [submodule "src/navigation2"]
 	path = src/navigation2
 	url = https://github.com/i-like-zzzz/navigation2.git
+[submodule "src/simple-slam"]
+	path = src/simple-slam
+	url = https://github.com/i-like-zzzz/simple-slam.git
