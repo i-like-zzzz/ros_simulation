@@ -2,7 +2,13 @@
 # -*- coding: utf-8 -*-
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo, TimerAction
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    LogInfo,
+    SetLaunchConfiguration,
+    TimerAction,
+)
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
@@ -15,6 +21,7 @@ def generate_launch_description():
     bag_file = LaunchConfiguration('bag_file')
     bag_rate = LaunchConfiguration('bag_rate')
     bag_loop = LaunchConfiguration('bag_loop')
+    bag_start_delay = LaunchConfiguration('bag_start_delay')
     simulator = LaunchConfiguration('simulator')
     start_navigation = LaunchConfiguration('start_navigation')
     start_rviz = LaunchConfiguration('start_rviz')
@@ -28,6 +35,7 @@ def generate_launch_description():
     nav2_autostart = LaunchConfiguration('nav2_autostart')
     simple_slam_config_file = LaunchConfiguration('simple_slam_config_file')
     simple_slam_mode = LaunchConfiguration('simple_slam_mode')
+    simple_slam_use_bag_config = LaunchConfiguration('simple_slam_use_bag_config')
 
     bringup_launch_dir = PathJoinSubstitution([FindPackageShare('bringup'), 'launch'])
 
@@ -101,7 +109,8 @@ def generate_launch_description():
         launch_arguments={
             'bag_file': bag_file,
             'bag_rate': bag_rate,
-            'bag_loop': bag_loop
+            'bag_loop': bag_loop,
+            'bag_start_delay': bag_start_delay
         }.items(),
         condition=IfCondition(play_bag)
     )
@@ -194,6 +203,21 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('slam_system', 'simple_slam')
     )
 
+    simple_slam_bag_config_override = SetLaunchConfiguration(
+        'simple_slam_config_file',
+        PathJoinSubstitution([
+            FindPackageShare('simple_slam'),
+            'config',
+            'simple_slam_bag_2d.yaml'
+        ]),
+        condition=IfCondition(
+            PythonExpression([
+                "'", slam_system, "' == 'simple_slam' and '", play_bag,
+                "' == 'true' and '", simple_slam_use_bag_config, "' == 'true'"
+            ])
+        )
+    )
+
     if nav2_bringup_available:
         navigation_include = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -243,6 +267,10 @@ def generate_launch_description():
             'bag_loop',
             default_value='false',
             description='Whether rosbag loops playback'),
+        DeclareLaunchArgument(
+            'bag_start_delay',
+            default_value='3.0',
+            description='Delay in seconds before rosbag playback starts'),
         DeclareLaunchArgument(
             'simulator',
             default_value='stage',
@@ -304,6 +332,10 @@ def generate_launch_description():
             default_value='mapping',
             description='simple_slam mode: mapping | localization'),
         DeclareLaunchArgument(
+            'simple_slam_use_bag_config',
+            default_value='true',
+            description='Use bag-specific simple_slam config when play_bag is true'),
+        DeclareLaunchArgument(
             'nav2_autostart',
             default_value='true',
             description='Autostart Nav2 lifecycle nodes'),
@@ -325,6 +357,7 @@ def generate_launch_description():
         cartographer_gazebo_delayed_include,
         cartographer_bag_include,
         slam_toolbox_include,
+        simple_slam_bag_config_override,
         simple_slam_include,
         navigation_include,
         rviz_include,

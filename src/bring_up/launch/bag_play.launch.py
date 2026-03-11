@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration
 
@@ -10,26 +10,33 @@ def generate_launch_description():
     bag_file = LaunchConfiguration('bag_file')
     bag_rate = LaunchConfiguration('bag_rate')
     bag_loop = LaunchConfiguration('bag_loop')
+    start_delay = LaunchConfiguration('bag_start_delay')
 
-    bag_play_once = ExecuteProcess(
-        cmd=[
-            'ros2', 'bag', 'play',
-            bag_file,
-            '--rate', bag_rate
-        ],
-        output='screen',
-        condition=UnlessCondition(bag_loop)
+    bag_play_once = TimerAction(
+        period=start_delay,
+        actions=[ExecuteProcess(
+            cmd=[
+                'ros2', 'bag', 'play',
+                bag_file,
+                '--rate', bag_rate
+            ],
+            output='screen',
+            condition=UnlessCondition(bag_loop)
+        )]
     )
 
-    bag_play_loop = ExecuteProcess(
-        cmd=[
-            'ros2', 'bag', 'play',
-            bag_file,
-            '--rate', bag_rate,
-            '--loop'
-        ],
-        output='screen',
-        condition=IfCondition(bag_loop)
+    bag_play_loop = TimerAction(
+        period=start_delay,
+        actions=[ExecuteProcess(
+            cmd=[
+                'ros2', 'bag', 'play',
+                bag_file,
+                '--rate', bag_rate,
+                '--loop'
+            ],
+            output='screen',
+            condition=IfCondition(bag_loop)
+        )]
     )
 
     return LaunchDescription([
@@ -45,6 +52,10 @@ def generate_launch_description():
             'bag_loop',
             default_value='false',
             description='Whether to loop rosbag playback'),
+        DeclareLaunchArgument(
+            'bag_start_delay',
+            default_value='3.0',
+            description='Delay in seconds before rosbag playback starts'),
         bag_play_once,
         bag_play_loop,
     ])
